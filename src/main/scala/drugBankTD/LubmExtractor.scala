@@ -10,6 +10,7 @@ import com.github.javafaker.Faker
 import org.apache.jena.rdf.model.{Model, ModelFactory}
 import java.text.SimpleDateFormat
 import java.time.Instant
+import drugBankTD.ProducerJSON
 
 
 
@@ -111,7 +112,7 @@ class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent:
    * encode the model in the given format
    * @param fileName filename where the model will be encoded
    */
-  def toFile(model: Model, fileName: String, extension: String): Unit = {
+  def toFile(model: Model, fileName: String, extension: String) = {
     val out = new FileWriter(fileName)
     try model.write(out, extension)
     finally try out.close()
@@ -189,16 +190,16 @@ class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent:
       if (model.contains(subject, model.createProperty("http://extension.group1.fr/onto#vaccine"))) {
 
         // Get the vaccine name
-        val vaccineObject = model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#vaccine")).getObject().toString()
+        val vaccineObject = model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#vaccine")).getObject.toString
         val vaccineName = vaccineObject.substring(vaccineObject.lastIndexOf("#") + 1)
 
         // Collect all the needed info in a Map
         val personSiderInfo = Map(
-          "id" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#id")).getObject().toString(),
-          "fname" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#fName")).getObject().toString(),
-          "lname" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#lName")).getObject().toString(),
+          "id" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#id")).getObject.toString,
+          "fname" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#fName")).getObject.toString,
+          "lname" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#lName")).getObject.toString,
           "vaccine" -> vaccineName,
-          "date" -> new Faker().date().between(Date.from(dateStartVaccine),Date.from(Instant.now())).toInstant.toString(),
+          "date" -> new Faker().date().between(Date.from(dateStartVaccine), Date.from(Instant.now())).toInstant.toString,
           "siderCode" -> randomSiderCode()
         )
 
@@ -209,5 +210,6 @@ class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent:
     })
 
     print(seq_records)
+    new ProducerJSON(seq_records).startProducer()
   }
 }
