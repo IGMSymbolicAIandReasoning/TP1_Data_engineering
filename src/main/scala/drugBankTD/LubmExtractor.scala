@@ -9,11 +9,14 @@ import java.util.Date
 import com.github.javafaker.Faker
 import org.apache.jena.rdf.model.{Model, ModelFactory}
 import java.text.SimpleDateFormat
+import java.time.Instant
+
+
 
 import scala.collection.convert.ImplicitConversions.`collection AsScalaIterable`
 import scala.util.control.Breaks.break
 
-class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent: Int, vaccinesRepartition: util.ArrayList[Int], vaccines: util.ArrayList[String], val subjects:  util.ArrayList[String]) {
+class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent: Int, vaccinesRepartition: util.ArrayList[Int], vaccines: util.ArrayList[String], val subjects:  util.ArrayList[String], val siderCodes: util.ArrayList[String], val dateStartVaccine: Instant) {
 
   vaccinesRepartition.forEach(e => if(e < 0 || e > 100) throw new IllegalArgumentException("Each element of vaccinesRepartition should be between 0 and 100"))
   vaccines.forEach(e => if(e.isEmpty) throw new IllegalArgumentException("Each element of vaccine should be non empty"))
@@ -147,7 +150,7 @@ class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent:
       model.add(model.createResource(uri), model.createProperty("http://extension.group1.fr/onto#gender"), model.createResource("http://extension.group1.fr/onto#" + randomGender()))   //Genre
       model.add(model.createResource(uri), model.createProperty("http://extension.group1.fr/onto#zipcode"), model.createLiteral(faker.address.zipCode()))   //ZipCode
       model.add(model.createResource(uri), model.createProperty("http://extension.group1.fr/onto#birhtdate"), model.createLiteral(faker.date().between(hight_birth_range, low_birth_range).toString))
-      model.add(model.createResource(uri), model.createProperty("http://extension.group1.fr/onto#id"), model.createLiteral(faker.idNumber().toString)) // ID
+      model.add(model.createResource(uri), model.createProperty("http://extension.group1.fr/onto#id"), model.createLiteral(faker.idNumber().valid())) // ID
     })
   }
 
@@ -159,5 +162,50 @@ class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent:
     all_subjects.forEach(uri => {
       if (randomVaccinator()) model.add(model.createResource(uri), model.createProperty("http://extension.group1.fr/onto#vaccine"), model.createResource("http://extension.group1.fr/onto#" + randomVaccine()))
     })
+  }
+
+  /**
+   * gives a random sider code from the sider code Array
+   */
+  def randomSiderCode(): String = {
+    val size = siderCodes.size()
+    val rand = new Faker().number.numberBetween(0, size - 1)
+    siderCodes.get(rand)
+  }
+
+  /**
+   * create a json that contains information about all vaccined person from the model: their id,
+   * first name, last name, vaccine name, a date and a side effect code
+   */
+  def extract_json_sider_records(): Unit = {
+    var seq_records : Seq[Map[String, String]] = Seq()
+
+    // For all subjects in our db
+    all_subjects.forEach(uri => {
+      val subject = model.createResource(uri)
+
+      // Proceed with extraction only if the subject has a "vaccine" property
+      if (model.contains(subject, model.createProperty("http://extension.group1.fr/onto#vaccine"))) {
+
+        // Get the vaccine name
+        val vaccineObject = model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#vaccine")).getObject().toString()
+        val vaccineName = vaccineObject.substring(vaccineObject.lastIndexOf("#") + 1)
+
+        // Collect all the needed info in a Map
+        val personSiderInfo = Map(
+          "id" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#id")).getObject().toString(),
+          "fname" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#fName")).getObject().toString(),
+          "lname" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#lName")).getObject().toString(),
+          "vaccine" -> vaccineName,
+          "date" -> new Faker().date().between(Date.from(dateStartVaccine),Date.from(Instant.now())).toInstant().toString(),
+          "siderCode" -> randomSiderCode()
+        )
+
+        // Save the map in a Seq
+        seq_records = seq_records :+ personSiderInfo
+      }
+    })
+
+    print(seq_records)
   }
 }

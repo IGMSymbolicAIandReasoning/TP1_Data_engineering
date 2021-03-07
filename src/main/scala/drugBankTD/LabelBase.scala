@@ -1,6 +1,7 @@
 package drugBankTD
 
 import java.text.SimpleDateFormat
+import java.time.Instant
 import java.util
 import java.util.Date
 import util.ArrayList
@@ -17,4 +18,7 @@ object LabelBase {
 
   val MALE_PERCENT : Int = 40
   val PEOPLE_VACCINATED_PERCENT : Int = 70
+
+  val SIDER_EFFECTS = new util.ArrayList[String](util.Arrays.asList("C0151828", "C0015672", "C0018681", "C0231528", "C0085593", "C0003862", "C0015967", "C0151605", "C0852625", "C0027497", "C0231218", "C0497156", "C0863083"))
+  val DATE_START_VACCINATION_CAMPAIGN = Instant.parse("2020-12-27T10:00:00.00Z")
 }
