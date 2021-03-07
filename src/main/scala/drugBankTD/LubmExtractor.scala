@@ -108,12 +108,12 @@ class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent:
   }
 
   /**
-   * encode the model in rdf format
+   * encode the model in the given format
    * @param fileName filename where the model will be encoded
    */
-  def toFile(fileName: String): Unit = {
+  def toFile(model: Model, fileName: String, extension: String): Unit = {
     val out = new FileWriter(fileName)
-    try model.write(out, "RDF/XML-ABBREV")
+    try model.write(out, extension)
     finally try out.close()
     catch {
       case _: IOException =>
@@ -173,12 +173,13 @@ class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent:
     siderCodes.get(rand)
   }
 
+
   /**
    * create a json that contains information about all vaccined person from the model: their id,
    * first name, last name, vaccine name, a date and a side effect code
    */
   def extract_json_sider_records(): Unit = {
-    var seq_records : Seq[Map[String, String]] = Seq()
+    var seq_records : Seq[String] = Seq()
 
     // For all subjects in our db
     all_subjects.forEach(uri => {
@@ -197,12 +198,13 @@ class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent:
           "fname" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#fName")).getObject().toString(),
           "lname" -> model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#lName")).getObject().toString(),
           "vaccine" -> vaccineName,
-          "date" -> new Faker().date().between(Date.from(dateStartVaccine),Date.from(Instant.now())).toInstant().toString(),
+          "date" -> new Faker().date().between(Date.from(dateStartVaccine),Date.from(Instant.now())).toInstant.toString(),
           "siderCode" -> randomSiderCode()
         )
 
         // Save the map in a Seq
-        seq_records = seq_records :+ personSiderInfo
+        seq_records = seq_records :+ JsonUtil.toJson(personSiderInfo)
+
       }
     })
 

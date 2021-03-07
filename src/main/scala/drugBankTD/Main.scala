@@ -20,7 +20,7 @@ object Main extends App {
   db.extract_json_sider_records()
 
   print("writes in file : ")
-  db.toFile(LabelBase.OUTPUT_FILE)
+  db.toFile(db.model, LabelBase.OUTPUT_FILE, "RDF/XML-ABBREV")
   println("done")
 
 
