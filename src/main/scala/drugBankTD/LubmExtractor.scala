@@ -10,7 +10,7 @@ import com.github.javafaker.Faker
 import org.apache.jena.rdf.model.{Model, ModelFactory}
 import java.text.SimpleDateFormat
 import java.time.Instant
-import drugBankTD.Producer
+import drugBankTD.ProducerJSON
 
 
 
@@ -209,57 +209,7 @@ class LubmExtractor(val dbSource: String, val male: Int, val vaccinationPercent:
       }
     })
 
-    val map = Map(
-      "bootstrap.servers" ->  "localhost:9092",
-      "key.serializer" -> "org.apache.kafka.common.serialization.StringSerializer",
-      "value.serializer" ->  "org.apache.kafka.common.serialization.StringSerializer"
-    )
-
-    new Producer(map).startJSONProducer(seq_records)
+    print(seq_records)
+    new ProducerJSON(seq_records).startProducer()
   }
-
-  /**
-   * create a json that contains information about all vaccined person from the model: their id,
-   * first name, last name, vaccine name, a date and a side effect code
-   */
-  def extract_avro_sider_records(): Unit = {
-    var seq_records : ArrayList[util.Map[String, String]] = new ArrayList()
-
-    // For all subjects in our db
-    all_subjects.forEach(uri => {
-      val subject = model.createResource(uri)
-
-      // Proceed with extraction only if the subject has a "vaccine" property
-      if (model.contains(subject, model.createProperty("http://extension.group1.fr/onto#vaccine"))) {
-
-        // Get the vaccine name
-        val vaccineObject = model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#vaccine")).getObject.toString
-        val vaccineName = vaccineObject.substring(vaccineObject.lastIndexOf("#") + 1)
-
-        // Collect all the needed info in a Map
-        val personSiderInfo = util.Map.of(
-          "id" , model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#id")).getObject.toString,
-          "fname" , model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#fName")).getObject.toString,
-          "lname" , model.getProperty(subject, model.createProperty("http://extension.group1.fr/onto#lName")).getObject.toString,
-          "vaccine" , vaccineName,
-          "date" , new Faker().date().between(Date.from(dateStartVaccine), Date.from(Instant.now())).toInstant.toString,
-          "siderCode" , randomSiderCode()
-        )
-
-        // Save the map in a Seq
-        seq_records.add(personSiderInfo)
-      }
-    })
-
-
-    val res = new AvroConvertor().launchProducer(seq_records)
-
-    val map = Map(
-      "bootstrap.servers" ->  "localhost:9092",
-      "key.serializer" -> "org.apache.kafka.common.serialization.StringSerializer",
-      "value.serializer" ->  "org.apache.kafka.common.serialization.ByteArraySerializer"
-    )
-    new Producer(map).startAVROroducer(res)
-  }
-
 }

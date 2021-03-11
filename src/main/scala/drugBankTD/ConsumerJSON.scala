@@ -10,7 +10,7 @@ object ConsumerJSON extends App {
 
   import java.util.Properties
 
-  val TOPIC="tp1"
+  val TOPIC="test"
 
   val  props = new Properties()
   props.put("bootstrap.servers", "localhost:9092")
