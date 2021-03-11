@@ -15,3 +15,5 @@ libraryDependencies += "com.github.javafaker" % "javafaker" % "1.0.2"
 libraryDependencies += "org.codehaus.jackson" % "jackson-mapper-asl" % "1.8.10"
 
 libraryDependencies += "org.apache.kafka" % "kafka-clients" % "0.10.0.0"
+
+libraryDependencies += "com.twitter" %% "bijection-avro" % "0.9.7"

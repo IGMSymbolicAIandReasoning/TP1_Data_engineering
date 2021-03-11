@@ -17,10 +17,10 @@ object Main extends App {
   db.extender_vaccine()
   println("done.")
 
-  db.extract_json_sider_records()
-
-  print("writes in file : ")
-  db.toFile(db.model, LabelBase.OUTPUT_FILE, "RDF/XML-ABBREV")
+  //db.extract_json_sider_records()
+  db.extract_avro_sider_records()
+  //print("writes in file : ")
+  //db.toFile(db.model, LabelBase.OUTPUT_FILE, "RDF/XML-ABBREV")
   println("done")
 
 
